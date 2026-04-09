@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Lucian's Challenges</title>
+
+<!-- Montserrat font -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  color: white;
+  background: transparent;
+}
+
+.container {
+  padding: 12px;
+  border-radius: 8px;
+  width: max-content;
+  min-width: 200px;
+  background-color: transparent;
+  transition: background-color 0.4s ease;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.progress {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+
+.challenge {
+  margin: 6px 0;
+  padding: 4px 8px;
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.3s ease;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+  border-radius: 4px;
+  font-weight: 400;
+}
+
+.challenge.enter {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.challenge.enter.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.challenge.done {
+  text-decoration: line-through;
+  opacity: 0.5;
+  color: #a0a0a0;
+}
+
+.pop {
+  animation: pop 0.3s ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <div id="title" class="title">Lucian's Challenges</div>
+  <div id="progress" class="progress"></div>
+  <div id="list"></div>
+</div>
+
+<script>
+// BroadcastChannel for real-time updates
+
+
+let lastState = "";
+
+function load() {
+  return JSON.parse(localStorage.getItem("challenges") || "[]");
+}
+
+function render() {
+  let challenges = load();
+  let visible = challenges.filter(c => c.visible);
+
+  let state = JSON.stringify(visible);
+  if (state === lastState) return;
+  lastState = state;
+
+  let title = document.getElementById("title");
+  let progress = document.getElementById("progress");
+  let containerDiv = document.querySelector('.container');
+
+  title.style.opacity = visible.length ? 1 : 0;
+  containerDiv.style.backgroundColor = visible.length ? 'rgba(8,43,64,0.5)' : 'transparent';
+
+  let doneCount = visible.filter(c => c.done).length;
+  progress.innerText = visible.length ? `${doneCount}/${visible.length} complete` : "";
+
+  let listContainer = document.getElementById("list");
+  listContainer.innerHTML = "";
+
+  visible.forEach(c => {
+    let div = document.createElement("div");
+    div.className = "challenge enter";
+    if (c.done) div.classList.add("done", "pop");
+    div.innerText = `${c.done ? '✔' : '⬜'} ${c.text}`;
+    listContainer.appendChild(div);
+
+    requestAnimationFrame(() => {
+      div.classList.add("show");
+    });
+  });
+}
+
+// Initial render
+render();
+
+// Listen for controller updates
+setInterval(() => {
+  render();
+}, 500);
+</script>
+</body>
+</html>
