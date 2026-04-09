@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: 'Montserrat', sans-serif; padding:20px; background:#082b40; color:white;">
+
+<h2>Lucian Control Panel</h2>
+
+<input id="newChallenge" placeholder="New challenge">
+<button onclick="add()">Add</button>
+
+<div id="controls"></div>
+
+<button onclick="resetProgress()">Reset</button>
+
+<script>
+// BroadcastChannel
+const channel = new BroadcastChannel('challengeChannel');
+
+function load() {
+  return JSON.parse(localStorage.getItem("challenges") || "[]");
+}
+
+function save(data) {
+  localStorage.setItem("challenges", JSON.stringify(data));
+}
+
+function broadcast(challenges) {
+  channel.postMessage({ type: 'update', challenges });
+}
+
+function render() {
+  let challenges = load();
+
+  document.getElementById("controls").innerHTML =
+    challenges.map((c, i) => `
+      <div style="margin:10px 0;">
+        <b>${c.text}</b><br>
+        <button onclick="toggleVisible(${i})">
+          ${c.visible ? "Hide" : "Show"}
+        </button>
+        <button onclick="toggleDone(${i})">
+          ${c.done ? "Undo" : "Complete"}
+        </button>
+        <button onclick="remove(${i})">Delete</button>
+      </div>
+    `).join("");
+}
+
+// Add new challenge
+function add() {
+  let val = document.getElementById("newChallenge").value;
+  if (!val) return;
+
+  let challenges = load();
+  challenges.push({ text: val, done: false, visible: false });
+  save(challenges);
+  broadcast(challenges);
+
+  document.getElementById("newChallenge").value = "";
+  render();
+}
+
+// Toggle visibility
+function toggleVisible(i) {
+  let challenges = load();
+  challenges[i].visible = !challenges[i].visible;
+  save(challenges);
+  broadcast(challenges);
+  render();
+}
+
+// Toggle done
+function toggleDone(i) {
+  let challenges = load();
+  challenges[i].done = !challenges[i].done;
+  save(challenges);
+  broadcast(challenges);
+  render();
+}
+
+// Remove challenge
+function remove(i) {
+  let challenges = load();
+  challenges.splice(i, 1);
+  save(challenges);
+  broadcast(challenges);
+  render();
+}
+
+// Reset all progress
+function resetProgress() {
+  let challenges = load();
+  challenges.forEach(c => { c.done = false; c.visible = false; });
+  save(challenges);
+  broadcast(challenges);
+  render();
+}
+
+// Initial render
+render();
+</script>
+</body>
+</html>
